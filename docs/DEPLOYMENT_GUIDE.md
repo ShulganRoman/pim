@@ -12,6 +12,7 @@ This guide documents deployment implementation in detail:
 
 This guide is intentionally operational and implementation-focused.
 For application architecture, see `docs/CODE_AND_ARCHITECTURE_GUIDE.md`.
+For Excel template/payload rules, see `docs/EXCEL_IMPORT_GUIDE.md`.
 
 ---
 
@@ -21,9 +22,9 @@ The deployment layer is implemented by the following files:
 
 - `/Users/romanshulgan/pim/docker-compose.yml`
 - `/Users/romanshulgan/pim/.env` and `/Users/romanshulgan/pim/.env.example`
-- `/Users/romanshulgan/pim/pim-frontend/pim-project/Dockerfile`
-- `/Users/romanshulgan/pim/pim-frontend/pim-project/nginx.conf`
-- `/Users/romanshulgan/pim/pim-frontend/pim-project/.dockerignore`
+- `/Users/romanshulgan/pim/pim-frontend/Dockerfile`
+- `/Users/romanshulgan/pim/pim-frontend/nginx.conf`
+- `/Users/romanshulgan/pim/pim-frontend/.dockerignore`
 - `/Users/romanshulgan/pim/pim-backend/Dockerfile`
 - `/Users/romanshulgan/pim/db-init/00-create-role-and-db.sh`
 - `/Users/romanshulgan/pim/db-init/10-run-openpim-init.sh`
@@ -104,7 +105,8 @@ Purpose:
 
 - expose frontend-facing API;
 - proxy/compose GraphQL calls to OpenPIM;
-- handle file uploads.
+- handle file uploads;
+- execute Excel-driven import mutation via `/api/import/execute`.
 
 Important settings:
 
@@ -129,7 +131,7 @@ Purpose:
 
 Important settings:
 
-- built from `pim-frontend/pim-project/Dockerfile`
+- built from `pim-frontend/Dockerfile`
 - publishes `FRONTEND_PORT`
 - depends on `backend`
 
@@ -389,6 +391,14 @@ curl -fsS http://localhost:${BACKEND_PORT}/api/graphql/operations
 curl -fsS http://localhost:${OPENPIM_PORT}
 ```
 
+Excel import endpoint smoke check:
+
+```bash
+curl -fsS -X POST http://localhost:${BACKEND_PORT}/api/import/execute \
+  -H "Content-Type: application/json" \
+  -d '{"config":{"mode":"CREATE_UPDATE","errors":"PROCESS_WARN"},"types":[],"attrGroups":[],"attributes":[],"items":[]}'
+```
+
 ## 11.3 Proxy path verification
 
 Frontend endpoint should proxy backend API:
@@ -463,6 +473,21 @@ docker compose up -d --build
 ```
 
 Use only when safe to reset data.
+
+## 12.5 Excel import rows become `REJECTED`
+
+Common item-level reason in OpenPIM:
+- `Can not create item with such typeIdentifier under root`.
+
+Meaning:
+- imported item type is child type;
+- row has no `parent_identifier`;
+- OpenPIM rejects creation under root.
+
+Fix:
+1. define/create parent items (template sheet `Item_Parents`);
+2. reference those identifiers in product rows `parent_identifier`;
+3. re-run import.
 
 ---
 

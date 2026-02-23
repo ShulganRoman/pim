@@ -1,8 +1,8 @@
 # PIM Workspace Documentation
 
 This workspace contains a full Product Information Management stack:
-- `pim-frontend/pim-project`: React + Vite + Nginx frontend (`PIM Console`)
-- `pim-backend`: Spring Boot API gateway for file upload and dynamic GraphQL operation execution
+- `pim-frontend`: React + Vite + Nginx frontend (`PIM Console`)
+- `pim-backend`: Spring Boot API gateway for file upload, dynamic GraphQL execution, and Excel import execution
 - `openpim`: OpenPIM application container
 - `postgres`: PostgreSQL database initialized by `db-init/`
 
@@ -12,7 +12,8 @@ The project is documented in detail to support fast onboarding and fast iteratio
 
 1. [Code & Architecture Guide](./docs/CODE_AND_ARCHITECTURE_GUIDE.md)
 2. [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md)
-3. [Environment Template](./.env.example)
+3. [Excel Import Guide](./docs/EXCEL_IMPORT_GUIDE.md)
+4. [Environment Template](./.env.example)
 
 ## Quick Start (Docker)
 

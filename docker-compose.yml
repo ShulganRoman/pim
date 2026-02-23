@@ -57,7 +57,7 @@ services:
 
   frontend:
     build:
-      context: ./pim-frontend/pim-project
+      context: ./pim-frontend
       dockerfile: Dockerfile
     container_name: pim-frontend
     restart: unless-stopped

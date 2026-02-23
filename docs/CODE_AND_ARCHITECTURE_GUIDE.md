@@ -12,19 +12,20 @@ Its goals are:
 
 This document focuses on the application code.
 For operations and infrastructure runbooks, see `docs/DEPLOYMENT_GUIDE.md`.
+For detailed workbook contract and import validation matrix, see `docs/EXCEL_IMPORT_GUIDE.md`.
 
 ---
 
 ## 2. System Overview
 
 The workspace contains a 4-service stack:
-- `frontend` (`pim-frontend/pim-project`): React UI served by Nginx;
-- `backend` (`pim-backend`): Spring Boot API that exposes file upload + GraphQL explorer endpoints;
+- `frontend` (`pim-frontend`): React UI served by Nginx;
+- `backend` (`pim-backend`): Spring Boot API that exposes file upload, GraphQL explorer, and Excel import execution endpoints;
 - `openpim`: external OpenPIM service (Docker image);
 - `postgres`: PostgreSQL used by OpenPIM.
 
 Key design decision:
-- The frontend is now fully externalized in `pim-frontend/pim-project`.
+- The frontend is now fully externalized in `pim-frontend`.
 - Backend no longer serves static HTML from `src/main/resources/static`.
 
 ### 2.1 Runtime interaction
@@ -42,6 +43,9 @@ flowchart LR
 - Upload a file to backend (`/api/upload`).
 - Browse all GraphQL operations discovered from schema files.
 - Execute selected Query/Mutation with custom JSON arguments and selection set.
+- Download a typed Excel template for PIM data migration.
+- Validate Excel workbook rows on the frontend before any backend calls.
+- Push validated workbook payload through backend import API (`/api/import/execute`).
 - See resulting data/errors and generated GraphQL query.
 
 ---
@@ -56,16 +60,19 @@ flowchart LR
 - `docs/`: this guide + deployment documentation.
 
 ### 3.2 Frontend
-- `pim-frontend/pim-project/src/App.jsx`: complete application logic (upload + GraphQL explorer).
-- `pim-frontend/pim-project/src/App.css`: console UI styling.
-- `pim-frontend/pim-project/src/index.css`: root layout reset.
-- `pim-frontend/pim-project/vite.config.js`: dev server + `/api` proxy.
-- `pim-frontend/pim-project/nginx.conf`: production routing + proxy.
-- `pim-frontend/pim-project/Dockerfile`: build static assets and serve with Nginx.
+- `pim-frontend/src/App.jsx`: complete application logic (Excel import + upload + GraphQL explorer).
+- `pim-frontend/src/App.css`: console UI styling.
+- `pim-frontend/src/index.css`: root layout reset.
+- `pim-frontend/src/excelImportTemplate.js`: workbook template generation and required sheet metadata.
+- `pim-frontend/src/excelImportParser.js`: workbook parser, cross-sheet validation, payload construction.
+- `pim-frontend/vite.config.js`: dev server + `/api` proxy.
+- `pim-frontend/nginx.conf`: production routing + proxy.
+- `pim-frontend/Dockerfile`: build static assets and serve with Nginx.
 
 ### 3.3 Backend
 - `pim-backend/src/main/java/org/example/FileController.java`: upload/download REST API.
 - `pim-backend/src/main/java/org/example/pim/graphql/PimGraphQlController.java`: GraphQL metadata + execution API.
+- `pim-backend/src/main/java/org/example/pim/importer/ExcelImportController.java`: REST adapter for OpenPIM GraphQL import mutation.
 - `pim-backend/src/main/java/org/example/pim/graphql/SchemaOperationRegistry.java`: schema parsing, operation discovery, selection suggestions.
 - `pim-backend/src/main/java/org/example/pim/graphql/PimGraphQlClient.java`: GraphQL HTTP client, auth token strategy, query serialization.
 - `pim-backend/src/main/java/org/example/pim/graphql/GraphQlContracts.java`: DTO contracts for frontend/backend communication.
@@ -76,16 +83,17 @@ flowchart LR
 
 ## 4. Frontend Deep Dive
 
-Frontend is a single-page React app centered around one component (`App`) with pure hooks-based state management.
+Frontend is a single-page React app centered around one component (`App`) with pure hooks-based state management plus dedicated Excel parser/template modules.
 
 ## 4.1 Component responsibilities (`src/App.jsx`)
 
-The component handles five domains:
+The component handles six domains:
 1. operation catalog loading;
 2. operation filtering/selection;
 3. argument template generation;
 4. GraphQL execution;
-5. file upload.
+5. file upload;
+6. Excel import pipeline (template download -> workbook parse/validate -> backend push).
 
 ### 4.1.1 State model
 
@@ -103,6 +111,13 @@ The component handles five domains:
 | `selectionPlaceholder` | string | UX hint for selection input |
 | `executeStatus` | `{text, tone}` | operation execution status |
 | `resultOutput` | string | pretty-printed backend response |
+| `importFileName` | string | selected workbook name |
+| `importSummary` | object | parsed workbook totals (types, groups, attrs, items, issues) |
+| `importErrors` / `importWarnings` | array | structured validation issues for UI preview |
+| `importPayload` | object/null | normalized payload sent to `/api/import/execute` |
+| `importStatus` | `{text, tone}` | Excel import status message |
+| `importResult` | string | pretty-printed import response |
+| `importLoading` | boolean | import request lock |
 
 ### 4.1.2 Derived state (`useMemo`)
 - `allOperations`: merged list of query + mutation operations.
@@ -150,6 +165,31 @@ Prefixes requests with `VITE_API_BASE` when provided.
 - Default (`""`): same-origin `/api` calls.
 - Optional: external API host in special deployments.
 
+### 4.2.6 `downloadImportTemplate()`
+From `src/excelImportTemplate.js`, creates and downloads `PIM_Import_Template.xlsx` with:
+- metadata sheets (`Import_Config`, `Attribute_Groups`, `Attributes`, `Types`, `Type_Group_Bindings`, `Item_Parents`);
+- required product sheets (`TCT_Router_Bit`, `Insert_Tool`, `Countersink`);
+- sample rows pre-linked with parent-child item hierarchy.
+
+### 4.2.7 `parseAndValidateImportWorkbook(arrayBuffer)`
+From `src/excelImportParser.js`, performs deterministic parsing and validation:
+- required sheets and headers;
+- enum validation (`mode`, `errors`);
+- duplicate and missing identifiers;
+- cross-sheet references (group/type/attribute);
+- item parent constraints (child types require `parent_identifier`);
+- JSON validation (`values_json`, `channels_json`);
+- dynamic `attr:<attribute_identifier>` value coercion by attribute type.
+
+Output includes:
+- `valid` boolean;
+- normalized `payload` for backend;
+- `summary`;
+- structured `errors` and `warnings`.
+
+### 4.2.8 `flattenImportResults(data)`
+Normalizes OpenPIM import response sections (`types`, `attrGroups`, `attributes`, `items`) into one array so UI can count rejected rows and warnings.
+
 ---
 
 ## 4.3 Frontend API calls and behavior
@@ -190,6 +230,21 @@ Success message includes:
 - uploaded size;
 - backend-generated stored filename (available in response, not all shown in UI).
 
+### 4.3.4 Execute Excel import
+- endpoint: `POST /api/import/execute`
+- precondition: frontend validation has zero errors;
+- request body: parser-produced payload:
+  - `config`
+  - `types`
+  - `attrGroups`
+  - `attributes`
+  - `items`
+
+Frontend behavior:
+- disables push button if validation contains errors;
+- shows full backend response JSON;
+- marks operation as failed when HTTP is non-2xx, top-level errors exist, or any row result is `REJECTED`.
+
 ---
 
 ## 4.4 Frontend UX logic details
@@ -224,6 +279,34 @@ Vite dev server proxy forwards `/api` to backend target:
 Nginx serves SPA and proxies `/api/` to Docker service `backend:8080`.
 
 This avoids CORS configuration and keeps browser requests same-origin.
+
+---
+
+## 4.6 Excel Workbook Model
+
+Template and parser are strict by design, to fail fast on user data issues before OpenPIM mutation calls.
+
+### 4.6.1 Required workbook sheets
+- `Import_Config`
+- `Attribute_Groups`
+- `Attributes`
+- `Types`
+- `Type_Group_Bindings`
+- `Item_Parents`
+- `TCT_Router_Bit`
+- `Insert_Tool`
+- `Countersink`
+
+### 4.6.2 Item hierarchy rule
+If an item row uses a child type (type has `parent_identifier` in `Types`), the row must provide `parent_identifier`.
+This rule prevents OpenPIM runtime rejection: `Can not create item with such typeIdentifier under root`.
+
+### 4.6.3 Item import order
+Parser pushes rows in this order:
+1. `Item_Parents`
+2. product sheets (in fixed order from `PRODUCT_SHEETS`)
+
+This guarantees parent item availability during child item creation in a single import transaction.
 
 ---
 
@@ -296,11 +379,31 @@ Error policy:
 
 ---
 
-## 5.4 Schema discovery engine (`SchemaOperationRegistry`)
+## 5.4 Excel import API (`ExcelImportController`)
+
+### `POST /api/import/execute`
+Controller role:
+1. receive normalized import payload from frontend;
+2. normalize enum values (`mode`, `errors`) with safe defaults;
+3. execute OpenPIM `import(...)` mutation through `PimGraphQlClient.executeRaw(query, variables)`;
+4. return plain JSON data/errors for frontend rendering.
+
+Important implementation detail:
+- GraphQL variables are used for import request payload to preserve enum correctness and avoid string interpolation edge cases.
+
+Response shape:
+- `data`: import result per section (`types`, `attrGroups`, `attributes`, `items`);
+- `errors`: top-level GraphQL errors (if any).
+
+If top-level GraphQL errors exist, endpoint returns HTTP `502`.
+
+---
+
+## 5.5 Schema discovery engine (`SchemaOperationRegistry`)
 
 This class is the core feature enabling dynamic GraphQL explorer behavior.
 
-### 5.4.1 What it loads
+### 5.5.1 What it loads
 Registry searches schema files in this order:
 1. `classpath*:graphql/*.graphqls`
 2. `${user.dir}/schema/*.graphql`
@@ -308,12 +411,12 @@ Registry searches schema files in this order:
 
 It deduplicates by filename and sorts for deterministic output.
 
-### 5.4.2 Why this matters
+### 5.5.2 Why this matters
 - Works both in IDE and in Docker image.
 - Supports alternate development schema location (`/schema` folder).
 - Avoids accidental classpath `schema/*.graphql` collisions.
 
-### 5.4.3 Parsing pipeline
+### 5.5.3 Parsing pipeline
 For each schema document:
 1. read UTF-8 text;
 2. normalize leading BOM/invalid marker (`\uFEFF` or `\uFFFD`);
@@ -325,58 +428,58 @@ For each schema document:
    - operation fields from `Query` and `Mutation` types;
    - object fields for selection suggestion generation.
 
-### 5.4.4 Operation metadata generation
+### 5.5.4 Operation metadata generation
 For each operation field:
 - infer return type details (`baseType`, list, required);
 - infer argument list details;
 - determine if return type is scalar-like;
 - build suggested selection for object returns (depth-limited heuristic).
 
-### 5.4.5 Suggested selection heuristic
+### 5.5.5 Suggested selection heuristic
 - includes up to 5 scalar fields from target object;
 - adds one nested object selection path if possible;
 - uses `__typename` as fallback for unions/unknown object shapes;
 - recursion depth is bounded (`depth = 3`) and guarded by visited set.
 
-### 5.4.6 Ambiguous operation handling
+### 5.5.6 Ambiguous operation handling
 If frontend sends only `operationName` and both query/mutation share same name:
 - registry throws clear ambiguity error asking for explicit kind.
 
 ---
 
-## 5.5 GraphQL HTTP client (`PimGraphQlClient`)
+## 5.6 GraphQL HTTP client (`PimGraphQlClient`)
 
 This class converts typed request payloads into raw GraphQL query strings and sends them to OpenPIM.
 
-### 5.5.1 Query building
+### 5.6.1 Query building
 - operation keyword from kind (`query` or `mutation`)
 - arguments serialized recursively (maps, arrays, primitives)
 - selection normalized:
   - trims whitespace
   - accepts forms with or without outer braces
 
-### 5.5.2 Value serialization strategy
+### 5.6.2 Value serialization strategy
 - strings -> escaped and quoted;
 - numbers/booleans -> raw;
 - arrays -> `[ ... ]` recursively;
 - objects -> `{ field: value }` recursively;
 - null -> `null`.
 
-### 5.5.3 Authentication strategy
+### 5.6.3 Authentication strategy
 - if login/password configured:
   - all operations except `signIn` are executed with token header;
   - token fetched lazily through `signIn` mutation;
   - token cached in memory;
   - on auth-related errors (`token`, `auth`, `unauthorized`, `forbidden`) request retries once with fresh token.
 
-### 5.5.4 Error policy
+### 5.6.4 Error policy
 - HTTP `>= 400` from OpenPIM -> throws `IllegalStateException`;
 - invalid JSON body -> throws `IllegalStateException`;
 - interrupted IO -> re-interrupt thread and throw.
 
 ---
 
-## 5.6 Configuration model (`application.yml`)
+## 5.7 Configuration model (`application.yml`)
 
 Backend config keys:
 
@@ -493,6 +596,65 @@ Error:
 
 ---
 
+## 6.4 `POST /api/import/execute`
+
+Request shape:
+
+```json
+{
+  "config": {
+    "mode": "CREATE_UPDATE",
+    "errors": "PROCESS_WARN"
+  },
+  "types": [],
+  "attrGroups": [],
+  "attributes": [],
+  "items": []
+}
+```
+
+Success response shape:
+
+```json
+{
+  "data": {
+    "types": [{"identifier": "product_type", "result": "UPDATED", "errors": []}],
+    "attrGroups": [{"identifier": "commercial", "result": "UPDATED", "errors": []}],
+    "attributes": [{"identifier": "material", "result": "UPDATED", "errors": []}],
+    "items": [{"identifier": "router_bit_001", "result": "UPDATED", "errors": []}]
+  },
+  "errors": null
+}
+```
+
+Row-level rejection example (still HTTP 200):
+
+```json
+{
+  "data": {
+    "items": [
+      {
+        "identifier": "router_bit_001",
+        "result": "REJECTED",
+        "errors": [{"code": 6, "message": "Can not create item with such typeIdentifier under root"}]
+      }
+    ]
+  },
+  "errors": null
+}
+```
+
+Transport-level GraphQL error (HTTP 502):
+
+```json
+{
+  "data": null,
+  "errors": [{"message": "..." }]
+}
+```
+
+---
+
 ## 7. Development Playbooks (Fast Path)
 
 ## 7.1 Local frontend-only iteration
@@ -500,7 +662,7 @@ Error:
 Use this when you do not change backend code:
 
 ```bash
-cd /Users/romanshulgan/pim/pim-frontend/pim-project
+cd /Users/romanshulgan/pim/pim-frontend
 npm install
 VITE_PROXY_TARGET=http://localhost:8080 npm run dev
 ```
@@ -557,6 +719,12 @@ Recommended pattern:
 3. add frontend adapter function in `App.jsx` (or future API layer);
 4. document endpoint in this guide.
 
+## 8.4 Add new Excel product sheet
+1. add sheet name to `PRODUCT_SHEETS` in `pim-frontend/src/excelImportTemplate.js`;
+2. add sample rows in template generator for new sheet;
+3. no parser change is needed if columns follow base item schema and optional `attr:*` columns;
+4. validate by generating template, parsing it, and calling `/api/import/execute`.
+
 ---
 
 ## 9. Known Constraints and Risks
@@ -595,7 +763,7 @@ Recommended pattern:
 
 ```bash
 # Frontend lint/build
-cd /Users/romanshulgan/pim/pim-frontend/pim-project && npm run lint && npm run build
+cd /Users/romanshulgan/pim/pim-frontend && npm run lint && npm run build
 
 # Backend tests/package
 cd /Users/romanshulgan/pim/pim-backend && mvn test && mvn -DskipTests package
