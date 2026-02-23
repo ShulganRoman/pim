@@ -18,8 +18,8 @@ The project is documented in detail to support fast onboarding and fast iteratio
 ## Quick Start (Docker)
 
 ```bash
-cd /Users/romanshulgan/pim
-cp .env.example .env
+git clone https://github.com/ShulganRoman/pim.git
+git submodule update --init --recursive
 # edit .env values for your environment
 
 docker compose up -d --build
