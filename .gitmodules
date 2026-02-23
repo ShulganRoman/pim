@@ -1,0 +1,3 @@
+[submodule "pim-backend"]
+	path = pim-backend
+	url = https://github.com/ShulganRoman/pim-backend.git
