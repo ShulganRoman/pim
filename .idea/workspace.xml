@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3f67e2a6-2a11-4326-bda2-a81a431f6384" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/pim-backend/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/pim-backend/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-backend/src/main/java/org/example/FileController.java" beforeDir="false" afterPath="$PROJECT_DIR$/pim-backend/src/main/java/org/example/FileController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-backend/src/main/java/org/example/app/WebApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/pim-backend/src/main/java/org/example/app/WebApplication.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/pim-backend/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-backend/src/main/resources/static/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-backend/uploads/746d0200-f36e-419c-bab5-1e5f4bba02b5_data.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-backend/uploads/f6036cb7-7c12-438c-b4bb-895361cd9b7a_Книга1.xlsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-frontend/pim-project/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/pim-frontend/pim-project/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-frontend/pim-project/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/pim-frontend/pim-project/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-frontend/pim-project/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/pim-frontend/pim-project/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-frontend/pim-project/src/App.css" beforeDir="false" afterPath="$PROJECT_DIR$/pim-frontend/pim-project/src/App.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-frontend/pim-project/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/pim-frontend/pim-project/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-frontend/pim-project/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/pim-frontend/pim-project/src/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pim-frontend/pim-project/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/pim-frontend/pim-project/vite.config.js" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/pim-backend" />
+    <option name="ROOT_SYNC" value="SYNC" />
+  </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="2" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="3A2Gsx1rxpDrWEqlxYHONLxarc7" />
+  <component name="ProjectViewState">
+    <option name="autoscrollToSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="openDirectoriesWithSingleClick" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Docker.docker-compose.yml.openpim: Compose Deployment.executor&quot;: &quot;Run&quot;,
+    &quot;Docker.docker-compose.yml: Compose Deployment.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHELLCHECK.PATH&quot;: &quot;/Users/romanshulgan/Library/Application Support/JetBrains/IntelliJIdea2025.3/plugins/Shell Script/shellcheck&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/romanshulgan/pim&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/db-init" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Docker.docker-compose.yml: Compose Deployment">
+    <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
+      <deployment type="docker-compose.yml" />
+      <method v="2" />
+    </configuration>
+    <configuration name="docker-compose.yml: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="sourceFilePath" value="docker-compose.yml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <configuration name="docker-compose.yml.openpim: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">
+      <deployment type="docker-compose.yml">
+        <settings>
+          <option name="services">
+            <list>
+              <option value="openpim" />
+            </list>
+          </option>
+          <option name="sourceFilePath" value="docker-compose.yml" />
+        </settings>
+      </deployment>
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Docker.docker-compose.yml: Compose Deployment" />
+        <item itemvalue="Docker.docker-compose.yml.openpim: Compose Deployment" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-26cb7f24e5b0-intellij.indexing.shared.core-IU-253.29346.240" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.29346.240" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3f67e2a6-2a11-4326-bda2-a81a431f6384" name="Changes" comment="" />
+      <created>1771783461611</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1771783461611</updated>
+      <workItem from="1771783462796" duration="6126000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="com.apollographql.ijplugin.settings.ProjectSettingsState">
+    <option name="lspPassPathToSuperGraphYaml" value="false" />
+    <option name="telemetryInstanceId" value="9fbe41b7-1a3d-4eaa-b35d-3e7fafd1f454" />
+  </component>
+</project>

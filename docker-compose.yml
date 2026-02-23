@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: pim-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+
+      PIM_DB: ${PIM_DB:-pim_db}
+      PIM_ADMIN: ${PIM_ADMIN:-pim_admin}
+      PIM_ADMIN_PASSWORD: ${PIM_ADMIN_PASSWORD:-change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d
+
+  openpim:
+    image: openpim/production:2.1
+    container_name: openpim-app
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - "${OPENPIM_PORT:-80}:80"
+    depends_on:
+      - postgres
+    environment:
+      OPENPIM_DATABASE_ADDRESS: postgres
+      OPENPIM_DATABASE_NAME: ${PIM_DB:-pim_db}
+      OPENPIM_DATABASE_USER: ${PIM_ADMIN:-pim_admin}
+      OPENPIM_DATABASE_PASSWORD: ${PIM_ADMIN_PASSWORD:-change_me}
+    volumes:
+      - ${FILE_STORAGE_PATH}:/filestorage
+
+  backend:
+    build:
+      context: ./pim-backend/
+      dockerfile: Dockerfile
+    container_name: pim-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      - postgres
+      - openpim
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      OPENPIM_DATABASE_ADDRESS: postgres
+      OPENPIM_DATABASE_NAME: ${PIM_DB:-pim_db}
+      OPENPIM_DATABASE_USER: ${PIM_ADMIN:-pim_admin}
+      OPENPIM_DATABASE_PASSWORD: ${PIM_ADMIN_PASSWORD:-change_me}
+      PIM_GRAPHQL_ENDPOINT: http://openpim/graphql
+      LOGIN: ${OPENPIM_LOGIN:-}
+      PASSWORD: ${OPENPIM_PASSWORD:-}
+
+  frontend:
+    build:
+      context: ./pim-frontend/pim-project
+      dockerfile: Dockerfile
+    container_name: pim-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
