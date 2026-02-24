@@ -19,8 +19,8 @@ The project is documented in detail to support fast onboarding and fast iteratio
 
 ```bash
 git clone https://github.com/ShulganRoman/pim.git
-git submodule update --init --recursive
 cp pim
+git submodule update --init --recursive
 cp .env.example .env
 # edit .env values for your environment
 
